@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEBULA FORGE · V3 · Hyperion</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;user-select:none;font-family:'Segoe UI','Orbitron',system-ui,sans-serif}
+  body{background:radial-gradient(ellipse at top,#0a0f2a,#000);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:12px;overflow:hidden}
+  .game-container{background:rgba(5,8,20,.85);backdrop-filter:blur(8px);border:1.5px solid #1e3a7a;border-radius:28px;padding:18px 22px;box-shadow:0 0 80px rgba(0,140,255,.35),inset 0 0 40px rgba(0,200,255,.06);display:flex;flex-direction:column;align-items:center;max-width:1060px;position:relative;overflow:hidden}
+  .game-container::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(0,200,255,.04) 50%,transparent 60%);pointer-events:none;animation:sheen 8s infinite}
+  @keyframes sheen{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  .game-header{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:14px;padding:0 6px;z-index:2}
+  .logo{display:flex;align-items:center;gap:10px;color:#8ecae6;text-shadow:0 0 20px #00b4ff,0 0 40px #0066ff;font-weight:800;letter-spacing:4px;font-size:1.4rem}
+  .logo span{font-size:1.9rem;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+  .stats{display:flex;gap:18px;background:rgba(10,20,45,.9);padding:9px 22px;border-radius:60px;border:1px solid #2e5fa8;box-shadow:0 0 24px rgba(0,140,255,.4)}
+  .stat-item{display:flex;align-items:center;gap:7px;font-weight:700;font-size:1.05rem;color:#d4e8ff}
+  .gem-icon{color:#ff4d8d;text-shadow:0 0 14px #ff4d8d;font-size:1.35rem}
+  .fuel-icon{color:#ffb347;text-shadow:0 0 14px #ffb347;font-size:1.35rem}
+  .combo-tag{color:#ffe066;text-shadow:0 0 14px #ffaa00;font-weight:800;font-size:1rem;min-width:60px;text-align:center}
+  .canvas-wrapper{position:relative;border-radius:24px;overflow:hidden;border:1.5px solid #2f5a9c;box-shadow:0 0 60px rgba(0,160,255,.45),inset 0 0 60px rgba(0,60,160,.15);margin-bottom:12px;z-index:1}
+  canvas{display:block;width:100%;height:auto;background:#02040c}
+  .challenge-bar{display:flex;justify-content:space-between;align-items:center;width:100%;background:rgba(8,15,35,.95);border-radius:60px;padding:10px 22px;border:1px solid #2e5a9a;margin:4px 0 6px;color:#b0d0ff;z-index:2;gap:14px}
+  .challenge-info{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .challenge-icon{font-size:1.5rem;filter:drop-shadow(0 0 8px currentColor)}
+  .challenge-text{font-weight:600;letter-spacing:.5px;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .challenge-progress{background:#14264a;height:10px;flex:1;min-width:80px;border-radius:10px;overflow:hidden;border:1px solid #3a6ab0}
+  .challenge-fill{height:100%;width:0%;background:linear-gradient(90deg,#00d4ff,#7a5cff,#ff4d8d);border-radius:10px;transition:width .15s;box-shadow:0 0 18px #00a6ff}
+  .timer{font-weight:800;font-size:1.15rem;color:#ffd966;text-shadow:0 0 12px #ffaa00;min-width:58px;text-align:right;font-variant-numeric:tabular-nums}
+  .controls-panel{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:8px 0 6px;z-index:2}
+  .btn{background:linear-gradient(145deg,#14264a,#0a1224);border:1.5px solid #2e6ab0;color:#b3e0ff;padding:11px 26px;border-radius:40px;font-weight:700;letter-spacing:1px;font-size:.92rem;display:flex;align-items:center;gap:8px;transition:all .2s;box-shadow:0 0 14px rgba(0,140,255,.3);cursor:pointer;text-transform:uppercase;position:relative;overflow:hidden}
+  .btn:hover{background:linear-gradient(145deg,#1f3a6b,#13213f);border-color:#4e9eff;box-shadow:0 0 28px #0088ff;color:#fff;transform:translateY(-1px) scale(1.02)}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.35;pointer-events:none;filter:grayscale(.7)}
+  .btn.primary{border-color:#00d4ff;box-shadow:0 0 22px rgba(0,212,255,.5);color:#e0f4ff}
+  .btn.primary:hover{box-shadow:0 0 36px #00d4ff}
+  .shop{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:10px;width:100%;z-index:2}
+  .upgrade-card{background:rgba(8,18,38,.85);border:1.5px solid #2b5b9c;border-radius:20px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:140px;flex:1;max-width:180px;transition:all .2s;box-shadow:0 0 16px rgba(0,120,255,.2)}
+  .upgrade-card:hover{border-color:#4e9eff;box-shadow:0 0 28px rgba(0,180,255,.5);transform:translateY(-2px)}
+  .upgrade-name{color:#aad0ff;font-weight:700;letter-spacing:.5px;font-size:.82rem;text-align:center}
+  .upgrade-lvl{color:#7aa8e0;font-size:.7rem;letter-spacing:1px}
+  .upgrade-cost{color:#ffb3d9;font-weight:700;display:flex;align-items:center;gap:5px;font-size:1.05rem}
+  .upgrade-btn{background:#1f3a6b;border:none;border-radius:30px;padding:7px 16px;color:#d4edff;font-weight:700;cursor:pointer;transition:all .15s;border:1px solid #3f7bcb;font-size:.78rem;letter-spacing:1px;width:100%}
+  .upgrade-btn:hover:not(:disabled){background:#2f5a9c;color:#fff;box-shadow:0 0 18px #0088ff}
+  .upgrade-btn:disabled{opacity:.45;cursor:not-allowed;background:#1a233a}
+  .hint{color:#5f7fa8;font-size:.72rem;letter-spacing:1px;margin-top:6px;text-align:center;z-index:2}
+  .toast{position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(0,40,80,.95);border:1px solid #00d4ff;border-radius:30px;padding:10px 24px;color:#e0f4ff;font-weight:700;letter-spacing:1px;box-shadow:0 0 30px #0088ff;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:50;font-size:.9rem}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(6px)}
+  .toast.good{border-color:#00ffaa;box-shadow:0 0 30px #00ffaa;color:#c0ffe0}
+  .toast.bad{border-color:#ff4d6d;box-shadow:0 0 30px #ff4d6d;color:#ffd0d8}
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="toast" id="toast">teste</div>
+  <div class="game-header">
+    <div class="logo"><span>⨂</span> NEBULA FORGE</div>
+    <div class="stats">
+      <div class="stat-item"><span class="gem-icon">💎</span><span id="gemDisplay">0</span></div>
+      <div class="stat-item"><span class="fuel-icon">⚡</span><span id="fuelDisplay">100</span></div>
+      <div class="combo-tag" id="comboDisplay">x1</div>
+    </div>
+  </div>
+
+  <div class="canvas-wrapper">
+    <canvas id="gameCanvas" width="960" height="520"></canvas>
+  </div>
+
+  <div class="challenge-bar">
+    <div class="challenge-info">
+      <span class="challenge-icon" id="challengeIcon">🛸</span>
+      <span class="challenge-text" id="challengeLabel">PRONTO PARA O DESAFIO</span>
+    </div>
+    <div class="challenge-progress"><div class="challenge-fill" id="challengeFill"></div></div>
+    <span class="timer" id="timerDisplay">--</span>
+  </div>
+
+  <div class="controls-panel">
+    <button class="btn primary" id="startChallengeBtn">⚡ INICIAR DESAFIO</button>
+    <button class="btn" id="resetBtn">🔄 REINICIAR</button>
+  </div>
+
+  <div class="shop">
+    <div class="upgrade-card">
+      <div class="upgrade-name">⚡ VELOCIDADE</div>
+      <div class="upgrade-lvl">Nv <span id="speedLvl">1</span></div>
+      <div class="upgrade-cost">💎 <span id="speedCost">3</span></div>
+      <button class="upgrade-btn" id="buySpeed">MELHORAR</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-name">⛽ TANQUE</div>
+      <div class="upgrade-lvl">Nv <span id="tankLvl">1</span></div>
+      <div class="upgrade-cost">💎 <span id="tankCost">4</span></div>
+      <button class="upgrade-btn" id="buyTank">MELHORAR</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-name">🧲 ÍMÃ DE GEMAS</div>
+      <div class="upgrade-lvl">Nv <span id="magnetLvl">1</span></div>
+      <div class="upgrade-cost">💎 <span id="magnetCost">5</span></div>
+      <button class="upgrade-btn" id="buyMagnet">MELHORAR</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-name">🛡️ ESCUDO</div>
+      <div class="upgrade-lvl">Nv <span id="shieldLvl">1</span></div>
+      <div class="upgrade-cost">💎 <span id="shieldCost">6</span></div>
+      <button class="upgrade-btn" id="buyShield">MELHORAR</button>
+    </div>
+  </div>
+  <div class="hint">WASD / setas · ESPAÇO inicia desafio · Naves NPC cruzam o cenário quando você não está em desafio</div>
+</div>
+
+<script>
+(() => {
+  // =========================================================
+  // CANVAS & DOM
+  // =========================================================
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const el = id => document.getElementById(id);
+  const gemDisplay = el('gemDisplay'), fuelDisplay = el('fuelDisplay');
+  const challengeLabel = el('challengeLabel'), challengeFill = el('challengeFill');
+  const timerDisplay = el('timerDisplay'), challengeIcon = el('challengeIcon');
+  const comboDisplay = el('comboDisplay');
+  const speedCostSpan = el('speedCost'), tankCostSpan = el('tankCost');
+  const magnetCostSpan = el('magnetCost'), shieldCostSpan = el('shieldCost');
+  const speedLvlSpan = el('speedLvl'), tankLvlSpan = el('tankLvl');
+  const magnetLvlSpan = el('magnetLvl'), shieldLvlSpan = el('shieldLvl');
+  const startChallengeBtn = el('startChallengeBtn'), resetBtn = el('resetBtn');
+  const buySpeedBtn = el('buySpeed'), buyTankBtn = el('buyTank');
+  const buyMagnetBtn = el('buyMagnet'), buyShieldBtn = el('buyShield');
+  const toastEl = el('toast');
+
+  // =========================================================
+  // ESTADO GLOBAL
+  // =========================================================
+  const G = {
+    gems: 0,
+    fuel: 100,
+    maxFuel: 100,
+    shield: 0,
+    maxShield: 0,
+    combo: 1,
+    comboTimer: 0,
+    speedLevel: 1, tankLevel: 1, magnetLevel: 1, shieldLevel: 1,
+    speedCost: 3, tankCost: 4, magnetCost: 5, shieldCost: 6,
+    screenShake: 0,
+    flash: 0,
+    time: 0,
+  };
+
+  // Estado do desafio atual — ISOLADO
+  // { active, resolved, type, time, duration, target, progress, data, def }
+  let C = null;  // null = sem desafio
+
+  const ship = {
+    x: W/2, y: H/2, radius: 14,
+    baseSpeed: 4.0, speed: 4.0,
+    angle: 0, invuln: 0, trail: [],
+  };
+
+  let gemsList = [], asteroids = [], npcShips = [], particles = [], beacons = [], laserBolts = [];
+
+  // =========================================================
+  // CONTROLES
+  // =========================================================
+  const keys = { w:false,a:false,s:false,d:false, up:false,left:false,down:false,right:false };
+  addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (k==='w'||k==='arrowup')    { keys.w=true; keys.up=true; e.preventDefault(); }
+    if (k==='s'||k==='arrowdown')  { keys.s=true; keys.down=true; e.preventDefault(); }
+    if (k==='a'||k==='arrowleft')  { keys.a=true; keys.left=true; e.preventDefault(); }
+    if (k==='d'||k==='arrowright') { keys.d=true; keys.right=true; e.preventDefault(); }
+    if (k===' ') { e.preventDefault(); if(!C || !C.active) startChallenge(); else fireLaser(); }
+  });
+  addEventListener('keyup', e => {
+    const k = e.key.toLowerCase();
+    if (k==='w'||k==='arrowup')    { keys.w=false; keys.up=false; e.preventDefault(); }
+    if (k==='s'||k==='arrowdown')  { keys.s=false; keys.down=false; e.preventDefault(); }
+    if (k==='a'||k==='arrowleft')  { keys.a=false; keys.left=false; e.preventDefault(); }
+    if (k==='d'||k==='arrowright') { keys.d=false; keys.right=false; e.preventDefault(); }
+  });
+
+  // =========================================================
+  // UTIL
+  // =========================================================
+  const rand = (a,b) => a + Math.random()*(b-a);
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+  const dist = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+
+  function showToast(msg, type=''){
+    toastEl.textContent = msg;
+    toastEl.className = 'toast show ' + type;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+  function shake(mag){ G.screenShake = Math.max(G.screenShake, mag); }
+  function burst(x, y, color, count=14, speed=4){
+    for(let i=0;i<count;i++){
+      const ang = Math.random()*Math.PI*2;
+      const sp = rand(0.5, speed);
+      particles.push({ x, y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life:1, decay:rand(0.02,0.05), color, size:rand(1.5,3.5) });
+    }
+  }
+
+  // =========================================================
+  // UI
+  // =========================================================
+  function updateUI(){
+    gemDisplay.textContent = G.gems;
+    fuelDisplay.textContent = Math.floor(G.fuel);
+    comboDisplay.textContent = 'x' + G.combo;
+    comboDisplay.style.color = G.combo > 1 ? '#ffe066' : '#7aa8e0';
+    comboDisplay.style.textShadow = G.combo > 1 ? '0 0 14px #ffaa00' : 'none';
+
+    speedCostSpan.textContent = G.speedCost;
+    tankCostSpan.textContent = G.tankCost;
+    magnetCostSpan.textContent = G.magnetCost;
+    shieldCostSpan.textContent = G.shieldCost;
+    speedLvlSpan.textContent = G.speedLevel;
+    tankLvlSpan.textContent = G.tankLevel;
+    magnetLvlSpan.textContent = G.magnetLevel;
+    shieldLvlSpan.textContent = G.shieldLevel;
+
+    buySpeedBtn.disabled = G.gems < G.speedCost;
+    buyTankBtn.disabled = G.gems < G.tankCost;
+    buyMagnetBtn.disabled = G.gems < G.magnetCost;
+    buyShieldBtn.disabled = G.gems < G.shieldCost;
+
+    if (C && C.active){
+      const pct = C.target>0 ? clamp(C.progress/C.target,0,1) : 0;
+      challengeFill.style.width = (pct*100) + '%';
+      timerDisplay.textContent = Math.ceil(C.time) + 's';
+    } else {
+      challengeFill.style.width = '0%';
+      timerDisplay.textContent = '--';
+    }
+  }
+
+  // =========================================================
+  // SPAWNS
+  // =========================================================
+  function spawnGem(){
+    gemsList.push({ x: rand(50,W-50), y: rand(50,H-50), radius:10, pulse: Math.random()*6 });
+  }
+  function spawnAsteroid(){
+    const edge = Math.floor(Math.random()*4);
+    let x,y,vx,vy, sp = rand(1.2, 2.6);
+    if (edge===0){ x=rand(0,W); y=-30; vy=sp; vx=rand(-0.6,0.6);}
+    else if (edge===1){ x=W+30; y=rand(0,H); vx=-sp; vy=rand(-0.6,0.6);}
+    else if (edge===2){ x=rand(0,W); y=H+30; vy=-sp; vx=rand(-0.6,0.6);}
+    else { x=-30; y=rand(0,H); vx=sp; vy=rand(-0.6,0.6);}
+    asteroids.push({x,y,vx,vy, radius: rand(16,30), rot: Math.random()*Math.PI*2, rotSp: rand(-0.03,0.03), sides: 5+Math.floor(Math.random()*4)});
+  }
+  function spawnBeacon(){
+    beacons.push({ x: rand(80,W-80), y: rand(80,H-80), radius:22, life:4.5, maxLife:4.5 });
+  }
+  function spawnNPC(){
+    const edge = Math.floor(Math.random()*4);
+    let x,y,vx,vy;
+    const sp = rand(1.2, 3.8);
+    if (edge===0){ x=-40; y=rand(40,H-40); vx=sp; vy=rand(-0.4,0.4);}
+    else if (edge===1){ x=W+40; y=rand(40,H-40); vx=-sp; vy=rand(-0.4,0.4);}
+    else if (edge===2){ x=rand(40,W-40); y=-40; vy=sp; vx=rand(-0.4,0.4);}
+    else { x=rand(40,W-40); y=H+40; vy=-sp; vx=rand(-0.4,0.4);}
+    const palette = [
+      {body:'#4dd0ff', glow:'#00b4ff', trail:'#0088ff'},
+      {body:'#ff6ec7', glow:'#ff4d8d', trail:'#ff1a75'},
+      {body:'#a78bfa', glow:'#7c5cff', trail:'#5b3dff'},
+      {body:'#4ade80', glow:'#00ff88', trail:'#00cc6a'},
+      {body:'#fbbf24', glow:'#ffaa00', trail:'#ff8800'},
+      {body:'#f87171', glow:'#ff4444', trail:'#cc2222'},
+    ];
+    const color = palette[Math.floor(Math.random()*palette.length)];
+    const shapes = ['arrow','diamond','tri','hex'];
+    npcShips.push({
+      x,y,vx,vy, speed: Math.hypot(vx,vy), color,
+      shape: shapes[Math.floor(Math.random()*shapes.length)],
+      size: rand(10,18), angle: Math.atan2(vy,vx), life: 12,
+    });
+  }
+
+  // =========================================================
+  // DEFINIÇÃO DOS DESAFIOS
+  // =========================================================
+  const CHALLENGES = [
+    {
+      id:'collect', name:'COLETA RÁPIDA', icon:'💎', desc:'Colete as gemas!', duration:14,
+      start(c){
+        c.target = 4 + G.speedLevel + Math.floor(G.tankLevel/2);
+        c.progress = 0;
+        for(let i=0;i<c.target+2;i++) spawnGem();
+      },
+      tick(c, dt){},
+      onGem(c){
+        c.progress++;
+        if (c.progress >= c.target) resolveChallenge(c, 'win', 'Coleta completa!');
+      }
+    },
+    {
+      id:'dodge', name:'ESQUIVA METEOROS', icon:'☄️', desc:'Sobreviva aos asteroides!', duration:12,
+      start(c){
+        c.target = c.duration;
+        c.progress = 0;
+        c.data.spawnT = 0;
+        for(let i=0;i<6;i++) spawnAsteroid();
+      },
+      tick(c, dt){
+        c.data.spawnT -= dt;
+        if (c.data.spawnT<=0){
+          spawnAsteroid();
+          c.data.spawnT = 0.35 + Math.random()*0.3;
+        }
+        c.progress = c.duration - c.time;
+      },
+      onHit(c){
+        resolveChallenge(c, 'lose', 'Colidiu com asteroide!');
+      }
+    },
+    {
+      id:'precision', name:'PRECISÃO', icon:'🎯', desc:'Destrua alvos com ESPAÇO!', duration:14,
+      start(c){
+        c.target = 4 + G.speedLevel;
+        c.progress = 0;
+        beacons = [];
+        c.data.cooldown = 0;
+        spawnBeacon();
+      },
+      tick(c, dt){
+        c.data.cooldown -= dt;
+        beacons.forEach(b => b.life -= dt);
+        beacons = beacons.filter(b => b.life > 0);
+        if (beacons.length === 0 && c.active) spawnBeacon();
+      },
+      fire(c, x, y, ang){
+        if (c.data.cooldown > 0) return;
+        c.data.cooldown = 0.22;
+        laserBolts.push({x,y,vx:Math.cos(ang)*11,vy:Math.sin(ang)*11,life:1.2,color:'#00d4ff'});
+      },
+      onBeacon(c){
+        c.progress++;
+        if (c.progress >= c.target) resolveChallenge(c, 'win', 'Precisão perfeita!');
+      }
+    },
+    {
+      id:'survive', name:'SOBREVIVÊNCIA', icon:'🛡️', desc:'Sobreviva ao caos!', duration:15,
+      start(c){
+        c.target = 15;
+        c.progress = 0;
+        c.data.spawnT = 0.4;
+        for(let i=0;i<4;i++) spawnAsteroid();
+      },
+      tick(c, dt){
+        c.data.spawnT -= dt;
+        if (c.data.spawnT<=0){
+          spawnAsteroid();
+          c.data.spawnT = 0.55 - Math.min(0.35, (c.duration - c.time)*0.01);
+        }
+        c.progress = c.duration - c.time;
+      },
+      onHit(c){
+        if (G.shield > 0){
+          G.shield = 0;
+          ship.invuln = 1.5;
+          shake(6);
+          burst(ship.x, ship.y, '#4dd0ff', 18, 5);
+          showToast('🛡️ Escudo absorveu!', 'good');
+        } else {
+          resolveChallenge(c, 'lose', 'Destruído pelo caos!');
+        }
+      }
+    },
+    {
+      id:'combo', name:'FRENESI DE COMBO', icon:'🔥', desc:'Colete tudo!', duration:12,
+      start(c){
+        c.target = 6;
+        c.progress = 0;
+        G.combo = 1;
+        for(let i=0;i<8;i++) spawnGem();
+      },
+      tick(c, dt){},
+      onGem(c){
+        c.progress++;
+        if (c.progress >= c.target) resolveChallenge(c, 'win', 'COMBO PERFEITO!');
+      }
+    },
+  ];
+
+  // =========================================================
+  // RESOLUÇÃO DO DESAFIO (única, segura, reentrante)
+  // =========================================================
+  function resolveChallenge(c, result, msg){
+    if (!c || !c.active || c.resolved) return;
+    c.resolved = true;
+    c.active = false;
+
+    if (result === 'win'){
+      const base = 3 + Math.floor(Math.random()*3) + G.speedLevel;
+      const bonus = Math.floor(base * G.combo);
+      G.gems += bonus;
+      G.fuel = Math.min(G.maxFuel, G.fuel + 12);
+      if (G.shieldLevel > 1) G.shield = G.maxShield;
+      shake(4);
+      burst(ship.x, ship.y, '#00ffaa', 30, 6);
+      burst(ship.x, ship.y, '#ffe066', 20, 4);
+      showToast(`✨ ${msg} +${bonus}💎`, 'good');
+    } else {
+      const penalty = c.type === 'survive' ? 20 : 15;
+      G.fuel = Math.max(0, G.fuel - penalty);
+      shake(14);
+      burst(ship.x, ship.y, '#ff4d6d', 24, 6);
+      showToast(`💥 ${msg} -${penalty}⚡`, 'bad');
+    }
+
+    // Cleanup dos objetos do desafio
+    gemsList = [];
+    asteroids = [];
+    beacons = [];
+    laserBolts = [];
+    G.combo = 1;
+    G.comboTimer = 0;
+
+    // UI reset
+    challengeLabel.textContent = 'PRONTO PARA O DESAFIO';
+    challengeIcon.textContent = '🛸';
+    challengeFill.style.width = '0%';
+    timerDisplay.textContent = '--';
+
+    // Libera o slot depois do frame (evita reentrada)
+    setTimeout(() => { if (C === c) C = null; }, 0);
+    updateUI();
+  }
+
+  // =========================================================
+  // INICIAR DESAFIO
+  // =========================================================
+  function startChallenge(){
+    if (C && C.active) return;
+    if (G.fuel < 10){ showToast('⚡ Combustível insuficiente!', 'bad'); return; }
+
+    // Limpa qualquer resquício
+    gemsList = []; asteroids = []; beacons = []; laserBolts = [];
+    G.combo = 1; G.comboTimer = 0;
+
+    const def = CHALLENGES[Math.floor(Math.random()*CHALLENGES.length)];
+    C = {
+      def, type: def.id,
+      active: true, resolved: false,
+      time: def.duration, duration: def.duration,
+      target: 0, progress: 0,
+      data: {},
+    };
+
+    challengeIcon.textContent = def.icon;
+    challengeLabel.textContent = `${def.name} · ${def.desc}`;
+
+    def.start(C);
+    updateUI();
+    showToast(`${def.icon} ${def.name}`, 'good');
+  }
+
+  // =========================================================
+  // FOGO
+  // =========================================================
+  function fireLaser(){
+    if (!C || !C.active || C.resolved) return;
+    if (C.type === 'precision') C.def.fire(C, ship.x, ship.y, ship.angle);
+  }
+
+  // =========================================================
+  // UPDATE DA NAVE + ENTIDADES
+  // IMPORTANTE: se C não estiver ativo/resolvido, não mexe em itens de desafio
+  // =========================================================
+  function updateShip(dt){
+    let dx=0, dy=0;
+    if (keys.w||keys.up) dy--;
+    if (keys.s||keys.down) dy++;
+    if (keys.a||keys.left) dx--;
+    if (keys.d||keys.right) dx++;
+
+    if (dx!==0||dy!==0){
+      const len = Math.hypot(dx,dy);
+      const sp = ship.speed;
+      dx = dx/len*sp; dy = dy/len*sp;
+      if (G.fuel > 0){
+        G.fuel = Math.max(0, G.fuel - 0.05 * (1 + (G.speedLevel-1)*0.12));
+      } else {
+        dx = dy = 0;
+      }
+      ship.x = clamp(ship.x + dx, ship.radius, W-ship.radius);
+      ship.y = clamp(ship.y + dy, ship.radius, H-ship.radius);
+      ship.angle = Math.atan2(dy,dx);
+      ship.trail.push({x:ship.x, y:ship.y, life:1});
+      if (ship.trail.length > 14) ship.trail.shift();
+    }
+
+    ship.trail.forEach(t => t.life -= dt*2.5);
+    ship.trail = ship.trail.filter(t => t.life > 0);
+    if (ship.invuln > 0) ship.invuln -= dt;
+
+    // Ímã
+    if (G.magnetLevel > 1){
+      const mr = 60 + (G.magnetLevel-1)*30;
+      gemsList.forEach(g => {
+        const d = dist(g, ship);
+        if (d < mr && d > 1){
+          const ang = Math.atan2(ship.y-g.y, ship.x-g.x);
+          const pull = 0.6 + G.magnetLevel*0.25;
+          g.x += Math.cos(ang)*pull;
+          g.y += Math.sin(ang)*pull;
+        }
+      });
+    }
+
+    // Coleta de gemas
+    for (let i=gemsList.length-1;i>=0;i--){
+      const g = gemsList[i];
+      if (dist(g,ship) < ship.radius + g.radius + 4){
+        G.gems++;
+        G.fuel = Math.min(G.maxFuel, G.fuel + 2);
+        if (C && C.active && !C.resolved){
+          const cb = C.def.onGem;
+          if (cb) cb(C);
+        }
+        if (C && C.active && !C.resolved && C.type === 'combo'){
+          G.combo = Math.min(9, G.combo+1);
+          G.comboTimer = 2.5;
+        }
+        burst(g.x, g.y, '#ff4d8d', 10, 3);
+        gemsList.splice(i,1);
+        updateUI();
+      }
+    }
+
+    // Combo decay
+    if (G.comboTimer > 0){
+      G.comboTimer -= dt;
+      if (G.comboTimer <= 0 && G.combo > 1){
+        G.combo = Math.max(1, G.combo-1);
+        G.comboTimer = 1.5;
+      }
+    }
+
+    // Asteroides
+    for (let i=asteroids.length-1;i>=0;i--){
+      const a = asteroids[i];
+      a.x += a.vx; a.y += a.vy; a.rot += a.rotSp;
+      if (a.x<-60||a.x>W+60||a.y<-60||a.y>H+60){ asteroids.splice(i,1); continue; }
+      if (ship.invuln <= 0 && dist(a, ship) < a.radius + ship.radius - 2){
+        if (C && C.active && !C.resolved){
+          const cb = C.def.onHit;
+          if (cb) cb(C);
+          else {
+            G.fuel = Math.max(0, G.fuel - 10);
+            shake(10);
+            burst(a.x,a.y,'#ff8844',16,5);
+            ship.invuln = 1.2;
+          }
+          asteroids.splice(i,1);
+        } else {
+          ship.x = clamp(ship.x + a.vx*2, ship.radius, W-ship.radius);
+          ship.y = clamp(ship.y + a.vy*2, ship.radius, H-ship.radius);
+          burst(a.x,a.y,'#ff8844',10,3);
+          asteroids.splice(i,1);
+        }
+      }
+    }
+
+    // Beacons (precisão) — colisão conta
+    if (C && C.active && !C.resolved && C.type === 'precision'){
+      for (let j=beacons.length-1;j>=0;j--){
+        const b = beacons[j];
+        if (dist(b,ship) < b.radius + ship.radius + 4){
+          C.def.onBeacon(C);
+          burst(b.x,b.y,'#00ffaa',16,4);
+          beacons.splice(j,1);
+          if (beacons.length===0 && C && C.active && !C.resolved) spawnBeacon();
+          if (!C || !C.active) break; // saiu do desafio, para iteração
+        }
+      }
+    }
+
+    // Lasers
+    for (let i=laserBolts.length-1;i>=0;i--){
+      const l = laserBolts[i];
+      l.x += l.vx; l.y += l.vy; l.life -= dt;
+      if (l.life<=0||l.x<-20||l.x>W+20||l.y<-20||l.y>H+20){ laserBolts.splice(i,1); continue; }
+      if (C && C.active && !C.resolved && C.type === 'precision'){
+        for (let j=beacons.length-1;j>=0;j--){
+          const b = beacons[j];
+          if (Math.hypot(l.x-b.x, l.y-b.y) < b.radius){
+            C.def.onBeacon(C);
+            burst(b.x,b.y,'#00ffaa',20,5);
+            beacons.splice(j,1);
+            laserBolts.splice(i,1);
+            if (beacons.length===0 && C && C.active && !C.resolved) spawnBeacon();
+            break;
+          }
+        }
+      }
+    }
+
+    // NPCs
+    for (let i=npcShips.length-1;i>=0;i--){
+      const n = npcShips[i];
+      n.x += n.vx; n.y += n.vy;
+      n.life -= dt;
+      if (n.x<-80||n.x>W+80||n.y<-80||n.y>H+80||n.life<=0) npcShips.splice(i,1);
+    }
+
+    // Partículas
+    for (let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.97; p.vy *= 0.97;
+      p.life -= p.decay;
+      if (p.life<=0) particles.splice(i,1);
+    }
+
+    if (G.screenShake > 0) G.screenShake *= 0.9;
+    if (G.flash > 0) G.flash -= dt*3;
+
+    // NPCs só fora de desafio
+    if (!C || !C.active){
+      if (Math.random() < 0.02) spawnNPC();
+    }
+  }
+
+  // =========================================================
+  // TICK DO DESAFIO — chamado ANTES de updateShip, e nunca causa reentrada
+  // =========================================================
+  function tickChallenge(dt){
+    if (!C || !C.active || C.resolved) return;
+
+    C.time -= dt;
+    if (C.time < 0) C.time = 0;
+
+    // Tick específico do tipo
+    if (C.def.tick) C.def.tick(C, dt);
+
+    // Se o tick já resolveu (ex: survive estourou alvo), sai
+    if (!C.active || C.resolved) return;
+
+    // Avaliação por tempo esgotado
+    if (C.time <= 0){
+      if (C.type === 'dodge' || C.type === 'survive'){
+        // Sobreviveu ao tempo inteiro = vitória
+        resolveChallenge(C, 'win', 'Tempo esgotado, mas sobreviveu!');
+      } else {
+        // collect, precision, combo: precisa ter batido o alvo
+        if (C.progress >= C.target) {
+          resolveChallenge(C, 'win', 'Tempo esgotado, mas completou!');
+        } else {
+          resolveChallenge(C, 'lose', 'Tempo esgotado!');
+        }
+      }
+    }
+  }
+
+  // =========================================================
+  // DRAW (nada muda estruturalmente)
+  // =========================================================
+  function draw(){
+    ctx.save();
+    if (G.screenShake > 0.3){
+      ctx.translate(rand(-G.screenShake,G.screenShake), rand(-G.screenShake,G.screenShake));
+    }
+
+    const bg = ctx.createRadialGradient(W*0.3, H*0.3, 60, W*0.6, H*0.6, W);
+    bg.addColorStop(0, '#071230');
+    bg.addColorStop(1, '#01020a');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    const t = G.time;
+    for (let i=0;i<180;i++){
+      const sx = (i*137.5) % W;
+      const sy = (i*293.7) % H;
+      const br = 0.3 + Math.sin(t*0.7 + i)*0.25;
+      ctx.fillStyle = `rgba(180,220,255,${br})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, (i%3)+0.4, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    const neb = ctx.createRadialGradient(W*0.2, H*0.3, 40, W*0.5, H*0.5, W*0.7);
+    neb.addColorStop(0, 'rgba(80,120,255,0.10)');
+    neb.addColorStop(0.5, 'rgba(160,40,220,0.05)');
+    neb.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = neb;
+    ctx.fillRect(0,0,W,H);
+
+    ship.trail.forEach((tr,i) => {
+      const alpha = tr.life * 0.5;
+      ctx.fillStyle = `rgba(0,180,255,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(tr.x, tr.y, 4 + i*0.7, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    gemsList.forEach(g => {
+      const pulse = 1 + Math.sin(t*4 + g.pulse)*0.15;
+      ctx.shadowColor = '#ff4d8d'; ctx.shadowBlur = 26;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, g.radius*pulse, 0, Math.PI*2);
+      ctx.fillStyle = '#ff4d8d'; ctx.fill();
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(g.x-2, g.y-2, g.radius*0.55, 0, Math.PI*2);
+      ctx.fillStyle = '#ffb3d9'; ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(g.x-3, g.y-3, g.radius*0.22, 0, Math.PI*2);
+      ctx.fillStyle = '#fff'; ctx.fill();
+    });
+
+    asteroids.forEach(a => {
+      ctx.save();
+      ctx.translate(a.x, a.y); ctx.rotate(a.rot);
+      ctx.shadowColor = '#ff8844'; ctx.shadowBlur = 16;
+      ctx.beginPath();
+      for (let i=0;i<a.sides;i++){
+        const ang = (i/a.sides)*Math.PI*2;
+        const r = a.radius * (0.8 + Math.sin(i*7.3)*0.2);
+        const px = Math.cos(ang)*r, py = Math.sin(ang)*r;
+        if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#553322'; ctx.fill();
+      ctx.strokeStyle = '#ff8844'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    });
+
+    beacons.forEach(b => {
+      const pulse = 1 + Math.sin(t*6)*0.2;
+      ctx.shadowColor = '#00ffaa'; ctx.shadowBlur = 30;
+      ctx.strokeStyle = '#00ffaa'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.radius*pulse, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.radius*0.5, 0, Math.PI*2); ctx.strokeStyle = '#88ffcc'; ctx.stroke();
+      ctx.shadowBlur = 0;
+      const pct = b.life/b.maxLife;
+      ctx.fillStyle = 'rgba(0,255,170,0.15)';
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.radius*pct, 0, Math.PI*2); ctx.fill();
+    });
+
+    laserBolts.forEach(l => {
+      ctx.shadowColor = l.color; ctx.shadowBlur = 18;
+      ctx.strokeStyle = l.color; ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(l.x, l.y);
+      ctx.lineTo(l.x - l.vx*1.2, l.y - l.vy*1.2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
+
+    npcShips.forEach(n => drawNPCShip(n));
+    drawPlayerShip();
+
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    if (G.flash > 0){
+      ctx.fillStyle = `rgba(255,255,255,${G.flash*0.3})`;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    if (C && C.active){
+      ctx.font = 'bold 15px "Segoe UI", sans-serif';
+      ctx.fillStyle = 'rgba(180,220,255,0.85)';
+      ctx.shadowBlur = 12; ctx.shadowColor = '#0088ff';
+      ctx.fillText(`Combo x${G.combo}`, 20, H-20);
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.restore();
+  }
+
+  function drawPlayerShip(){
+    const s = ship;
+    ctx.save();
+    ctx.translate(s.x, s.y); ctx.rotate(s.angle);
+    ctx.shadowColor = '#00b4ff'; ctx.shadowBlur = 28;
+
+    ctx.beginPath();
+    ctx.moveTo(20, 0);
+    ctx.lineTo(-12, -11);
+    ctx.lineTo(-6, 0);
+    ctx.lineTo(-12, 11);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(-12,0,20,0);
+    g.addColorStop(0, '#3a7bd5');
+    g.addColorStop(0.6, '#b3e0ff');
+    g.addColorStop(1, '#ffffff');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 2; ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(3, 0, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#4e9eff'; ctx.shadowBlur = 40; ctx.fill();
+
+    if (G.shield > 0 || (G.shieldLevel>1 && G.maxShield>0)){
+      ctx.shadowBlur = 20; ctx.shadowColor = '#00ffaa';
+      ctx.strokeStyle = `rgba(0,255,170,${0.35 + Math.sin(G.time*5)*0.15})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0,0, s.radius+10, 0, Math.PI*2); ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    if (s.invuln > 0 && Math.floor(s.invuln*10)%2===0){
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.radius+6, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+
+  function drawNPCShip(n){
+    ctx.save();
+    ctx.translate(n.x, n.y); ctx.rotate(n.angle);
+    ctx.shadowColor = n.color.glow; ctx.shadowBlur = 22;
+    const sz = n.size;
+    ctx.fillStyle = n.color.body;
+    ctx.strokeStyle = n.color.glow;
+    ctx.lineWidth = 2;
+
+    if (n.shape === 'arrow'){
+      ctx.beginPath();
+      ctx.moveTo(sz,0);
+      ctx.lineTo(-sz*0.7, -sz*0.6);
+      ctx.lineTo(-sz*0.3, 0);
+      ctx.lineTo(-sz*0.7, sz*0.6);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    } else if (n.shape === 'diamond'){
+      ctx.beginPath();
+      ctx.moveTo(sz,0); ctx.lineTo(0,-sz*0.7);
+      ctx.lineTo(-sz,0); ctx.lineTo(0,sz*0.7);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    } else if (n.shape === 'tri'){
+      ctx.beginPath();
+      ctx.moveTo(sz,0);
+      ctx.lineTo(-sz*0.7,-sz*0.8);
+      ctx.lineTo(-sz*0.7, sz*0.8);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    } else {
+      ctx.beginPath();
+      for (let i=0;i<6;i++){
+        const ang = (i/6)*Math.PI*2;
+        const px = Math.cos(ang)*sz*0.8, py = Math.sin(ang)*sz*0.8;
+        if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(-sz*0.6, 0, sz*0.25, 0, Math.PI*2);
+    ctx.fillStyle = n.color.trail;
+    ctx.shadowBlur = 30; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // =========================================================
+  // LOOP — ORDEM CRÍTICA: tick → update → draw
+  // =========================================================
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    G.time += dt;
+
+    // 1) Tick do desafio (pode resolver e setar C.active=false / C.resolved=true)
+    tickChallenge(dt);
+
+    // 2) Update da nave e entidades (sempre, mas respeitando C.active)
+    updateShip(dt);
+
+    // 3) Desenho
+    draw();
+
+    // 4) UI
+    updateUI();
+
+    requestAnimationFrame(loop);
+  }
+
+  // =========================================================
+  // LOJA
+  // =========================================================
+  buySpeedBtn.onclick = () => {
+    if (G.gems < G.speedCost) return;
+    G.gems -= G.speedCost; G.speedLevel++;
+    ship.speed = ship.baseSpeed + (G.speedLevel-1)*0.9;
+    G.speedCost = Math.floor(G.speedCost*1.7);
+    showToast('⚡ Velocidade melhorada!', 'good');
+    updateUI();
+  };
+  buyTankBtn.onclick = () => {
+    if (G.gems < G.tankCost) return;
+    G.gems -= G.tankCost; G.tankLevel++;
+    G.maxFuel = 100 + (G.tankLevel-1)*30;
+    G.fuel = Math.min(G.maxFuel, G.fuel + 25);
+    G.tankCost = Math.floor(G.tankCost*1.7);
+    showToast('⛽ Tanque ampliado!', 'good');
+    updateUI();
+  };
+  buyMagnetBtn.onclick = () => {
+    if (G.gems < G.magnetCost) return;
+    G.gems -= G.magnetCost; G.magnetLevel++;
+    G.magnetCost = Math.floor(G.magnetCost*1.8);
+    showToast('🧲 Ímã mais forte!', 'good');
+    updateUI();
+  };
+  buyShieldBtn.onclick = () => {
+    if (G.gems < G.shieldCost) return;
+    G.gems -= G.shieldCost; G.shieldLevel++;
+    G.maxShield = G.shieldLevel > 1 ? 1 : 0;
+    G.shield = G.maxShield;
+    G.shieldCost = Math.floor(G.shieldCost*1.8);
+    showToast('🛡️ Escudo instalado!', 'good');
+    updateUI();
+  };
+
+  // =========================================================
+  // BOTÕES
+  // =========================================================
+  startChallengeBtn.onclick = startChallenge;
+  resetBtn.onclick = () => {
+    if (!confirm('Reiniciar todo o progresso?')) return;
+    G.gems = 0; G.fuel = 100; G.maxFuel = 100; G.shield = 0; G.maxShield = 0;
+    G.speedLevel = 1; G.tankLevel = 1; G.magnetLevel = 1; G.shieldLevel = 1;
+    G.speedCost = 3; G.tankCost = 4; G.magnetCost = 5; G.shieldCost = 6;
+    G.combo = 1; G.comboTimer = 0;
+    C = null;
+    ship.x = W/2; ship.y = H/2; ship.speed = ship.baseSpeed;
+    ship.invuln = 0; ship.trail = [];
+    gemsList = []; asteroids = []; beacons = []; laserBolts = []; npcShips = []; particles = [];
+    challengeLabel.textContent = 'PRONTO PARA O DESAFIO';
+    challengeIcon.textContent = '🛸';
+    challengeFill.style.width = '0%';
+    timerDisplay.textContent = '--';
+    updateUI();
+    showToast('Jogo reiniciado', 'good');
+  };
+
+  // =========================================================
+  // INICIAL
+  // =========================================================
+  updateUI();
+  requestAnimationFrame(loop);
+  for (let i=0;i<4;i++) spawnNPC();
+
+})();
+</script>
+</body>
+</html>
